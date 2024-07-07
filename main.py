@@ -43,8 +43,9 @@ def deal_file(raw_file_path):
     results = []
     last_result = ""
     for chunk in tqdm(chunks):
-        url = 'https://www.deepl.com/zh/translator'  # 替换为你要操作的目标网址
+        url = 'https://www.deepl.com/zh/translator#en/zh/'  # 替换为你要翻译的语言
         browser.get(url)
+        browser.refresh()
         browser.execute_script(index_content)
         js_script = f"""
         var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
@@ -57,10 +58,11 @@ def deal_file(raw_file_path):
         // 创建并触发input事件以确保网站检测到变化
         var event = new Event('input', {{ bubbles: true }});
         inputBox.dispatchEvent(event);
-        setTimeout(function() {{
-        var result = outputBox.innerHTML;
-        console.log("输出结果: " + result);
-        }}, 60000);
+        
+        // setTimeout(function() {{
+        // var result = outputBox.innerHTML;
+        // console.log("输出结果: " + result);
+        // }}, 60000);
         """
         browser.execute_script(js_script)
         output_box = None
@@ -117,12 +119,12 @@ if __name__ == "__main__":
 
     driver_path = "C:XXXXXXXXXXXXXX/chromedriver-win64/chromedriver.exe"  # 替换为你的chromedriver路径
     path = "E:XXXXXXXXX/game/tl/schinese"  #替换为你的翻译文件目录
-
     with open('index.js', 'r', encoding='utf-8') as file:
         index_content = file.read()
 
     service = Service(driver_path)
     options = Options()
+    options.add_argument("headless")
     browser = webdriver.Chrome(service=service, options=options)
     # 接受用户输入的路径
     rpy_files = find_rpy_files(path)
