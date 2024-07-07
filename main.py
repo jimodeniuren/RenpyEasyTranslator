@@ -8,7 +8,7 @@ import re
 
 def split_into_chunks(file_content, chunk_size):
     # 使用正则表达式匹配翻译块
-    translation_block_start = re.compile(r'^# game.*\ntranslate schinese .*:\n$')
+    # translation_block_start = re.compile(r'^# game.*\ntranslate schinese .*:\n$')
 
     lines = file_content.split("# game")
     lines = [lines[0]] + ["# game" + line.replace(r'\n', '') for line in lines[1:]]
@@ -34,37 +34,51 @@ def deal_file(raw_file_path):
     except:
         pass
     error_cnt = 0
+    cnt = 0
     # 读取本地文件的内容
     with open(raw_file_path, 'r', encoding='utf-8') as file:
         file_content = file.read()
 
     # 分块
-    chunks = split_into_chunks(file_content, 7)
+    chunks = split_into_chunks(file_content, 5)
     results = []
     last_result = ""
+
     for chunk in tqdm(chunks):
-        url = 'https://www.deepl.com/zh/translator#en/zh/'  # 替换为你要翻译的语言
+        js_script = f"""
+                var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
+                var outputBox = document.querySelector('d-textarea[name="target"] div[contenteditable="true"]');
+                var textToCopy = `{chunk}`;
+
+                // 设置输入框的内容
+                inputBox.innerHTML = textToCopy;
+
+                // 创建并触发input事件以确保网站检测到变化
+                var event = new Event('input', {{ bubbles: true }});
+                inputBox.dispatchEvent(event);
+
+                // setTimeout(function() {{
+                // var result = outputBox.innerHTML;
+                // console.log("输出结果: " + result);
+                // }}, 60000);
+                """
+        global browser
         browser.get(url)
         browser.refresh()
-        browser.execute_script(index_content)
-        js_script = f"""
-        var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
-        var outputBox = document.querySelector('d-textarea[name="target"] div[contenteditable="true"]');
-        var textToCopy = `{chunk}`;
+        if cnt%150 == 0:
+            browser = webdriver.Chrome(service=service, options=options)
+            browser.get(url)
+            browser.refresh()
+        try:
+            browser.execute_script(index_content)
+            browser.execute_script(js_script)
+        except:
+            browser = webdriver.Chrome(service=service, options=options)
+            browser.get(url)
+            browser.refresh()
+            browser.execute_script(index_content)
+            browser.execute_script(js_script)
 
-        // 设置输入框的内容
-        inputBox.innerHTML = textToCopy;
-
-        // 创建并触发input事件以确保网站检测到变化
-        var event = new Event('input', {{ bubbles: true }});
-        inputBox.dispatchEvent(event);
-        
-        // setTimeout(function() {{
-        // var result = outputBox.innerHTML;
-        // console.log("输出结果: " + result);
-        // }}, 60000);
-        """
-        browser.execute_script(js_script)
         output_box = None
         result = ""
         start_time = time.time()
@@ -75,12 +89,19 @@ def deal_file(raw_file_path):
             except:
                 pass
             finally:
+                time.sleep(0.05)
                 if time.time() - start_time > 20:
                     result = chunk
                     error_cnt +=1
                     break
+        if error_cnt > max(len(chunks) // 30, 4):
+            with open("./error_file_list.txt", 'a', encoding="utf-8") as errf:
+                print(raw_file_path + "处理失败，可能已经被限速，请稍后重试")
+                errf.write(f"{raw_file_path}\n")
+                return
         last_result = result
         results.append(result)
+        cnt +=1
 
     # 合并所有结果并写入文件
     final_result = '\n'.join(results)
@@ -89,16 +110,11 @@ def deal_file(raw_file_path):
     filtered_lines = [line for line in lines if '""' not in line]
     # 将过滤后的行重新组合成字符串
     final_result = '\n'.join(filtered_lines)
-    if error_cnt > max(len(chunks)//10 -1, 0) :
-        with open("./error_file_list.txt", 'a', encoding="utf-8") as errf:
-            print(raw_file_path + "处理失败，请查看error_file_list.txt获取总结")
-            errf.write(f"{raw_file_path}\n")
-    else:
-        with open(raw_file_path, "w", encoding='utf-8') as f:
-            print(raw_file_path + " 处理完成！")
-            f.write(final_result)
-        with open("./finished_file_list.txt", 'a', encoding="utf-8") as finif:
-            finif.write(f"{raw_file_path}\n")
+    with open(raw_file_path, "w", encoding='utf-8') as f:
+        print(raw_file_path + " 处理完成！")
+        f.write(final_result)
+    with open("./finished_file_list.txt", 'a', encoding="utf-8") as finif:
+        finif.write(f"{raw_file_path}\n")
 
     # print("避免速率过快，暂停一会儿。。。")
     # time.sleep(300)
@@ -117,21 +133,28 @@ def find_rpy_files(path):
 
 if __name__ == "__main__":
 
-    driver_path = "C:XXXXXXXXXXXXXX/chromedriver-win64/chromedriver.exe"  # 替换为你的chromedriver路径
-    path = "E:XXXXXXXXX/game/tl/schinese"  #替换为你的翻译文件目录
+    driver_path = "C:XXXXXXXXXXXXXXXXX/chromedriver-win64/chromedriver.exe"  # 替换为你的chromedriver路径
+    path = "E:XXXXXXXXXXXXXXXXXXX/game/tl/schinese"	# 替换为要翻译的文件所在的路径
+    url = 'https://www.deepl.com/zh/translator#en/zh/'	默认英翻中，想翻别的语言可以把这里改一下
     with open('index.js', 'r', encoding='utf-8') as file:
         index_content = file.read()
 
     service = Service(driver_path)
     options = Options()
     options.add_argument("headless")
-    browser = webdriver.Chrome(service=service, options=options)
-    # 接受用户输入的路径
-    rpy_files = find_rpy_files(path)
+    # options.add_argument("--lang=zh-CN")
+    finished = False
+    while not finished:
+        try:
+            browser = webdriver.Chrome(service=service, options=options)
+            # 接受用户输入的路径
+            rpy_files = find_rpy_files(path)
 
-    for rpy_file in rpy_files:
-        rpy_file = rpy_file.replace("\\", "/")
-        print("开始处理：" + rpy_file)
-        deal_file(rpy_file)
-
-    browser.quit()
+            for rpy_file in rpy_files:
+                rpy_file = rpy_file.replace("\\", "/")
+                print("开始处理：" + rpy_file)
+                deal_file(rpy_file)
+            finished = True
+            browser.quit()
+        except:
+            pass
