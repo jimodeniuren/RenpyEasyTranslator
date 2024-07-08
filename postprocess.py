@@ -76,7 +76,7 @@ def process_line(line):
 
     return new_line
 
-path = "E:/Downloads/StudentTransfer-8.0-pc/game/tl/schinese/story"
+path = "E:XXXXXXXXX/game/tl/schinese/story"
 
 rpy_files = find_rpy_files(path)
 
