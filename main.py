@@ -94,7 +94,7 @@ def deal_file(raw_file_path):
                     result = chunk
                     error_cnt +=1
                     break
-        if error_cnt > max(len(chunks) // 30, 4):
+        if error_cnt > max(len(chunks) // 20, 4):
             with open("./error_file_list.txt", 'a', encoding="utf-8") as errf:
                 print(raw_file_path + "处理失败，可能已经被限速，请稍后重试")
                 errf.write(f"{raw_file_path}\n")
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
     driver_path = "C:XXXXXXXXXXXXXXXXX/chromedriver-win64/chromedriver.exe"  # 替换为你的chromedriver路径
     path = "E:XXXXXXXXXXXXXXXXXXX/game/tl/schinese"	# 替换为要翻译的文件所在的路径
-    url = 'https://www.deepl.com/zh/translator#en/zh/'	默认英翻中，想翻别的语言可以把这里改一下
+    url = 'https://www.deepl.com/zh/translator#en/zh/'	# 默认英翻中，想翻别的语言可以把这里改一下
     with open('index.js', 'r', encoding='utf-8') as file:
         index_content = file.read()
 
