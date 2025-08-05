@@ -1,5 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 import os
@@ -66,14 +65,14 @@ def deal_file(raw_file_path):
         browser.get(url)
         browser.refresh()
         if cnt%150 == 0:
-            browser = webdriver.Chrome(service=service, options=options)
+            browser = webdriver.Chrome(options=options)
             browser.get(url)
             browser.refresh()
         try:
             browser.execute_script(index_content)
             browser.execute_script(js_script)
         except:
-            browser = webdriver.Chrome(service=service, options=options)
+            browser = webdriver.Chrome(options=options)
             browser.get(url)
             browser.refresh()
             browser.execute_script(index_content)
@@ -132,29 +131,26 @@ def find_rpy_files(path):
     return rpy_files
 
 if __name__ == "__main__":
-
-    driver_path = "C:XXXXXXXXXXXXXXXXX/chromedriver-win64/chromedriver.exe"  # 替换为你的chromedriver路径
-    path = "E:XXXXXXXXXXXXXXXXXXX/game/tl/schinese"	# 替换为要翻译的文件所在的路径
+    path = "C:/Users/Administrator/Desktop/teest/RenpyEasyTranslator-main/aa"	# 替换为要翻译的文件所在的路径
     url = 'https://www.deepl.com/zh/translator#en/zh/'	# 默认英翻中，想翻别的语言可以把这里改一下
     with open('index.js', 'r', encoding='utf-8') as file:
         index_content = file.read()
 
-    service = Service(driver_path)
     options = Options()
     options.add_argument("headless")
     # options.add_argument("--lang=zh-CN")
     finished = False
     while not finished:
-        try:
-            browser = webdriver.Chrome(service=service, options=options)
+        # try:
+        browser = webdriver.Chrome(options=options)
             # 接受用户输入的路径
-            rpy_files = find_rpy_files(path)
+        rpy_files = find_rpy_files(path)
 
-            for rpy_file in rpy_files:
-                rpy_file = rpy_file.replace("\\", "/")
-                print("开始处理：" + rpy_file)
-                deal_file(rpy_file)
-            finished = True
-            browser.quit()
-        except:
-            pass
+        for rpy_file in rpy_files:
+            rpy_file = rpy_file.replace("\\", "/")
+            print("开始处理：" + rpy_file)
+            deal_file(rpy_file)
+        finished = True
+        browser.quit()
+        # except Exception as e:
+        #     print(e)
