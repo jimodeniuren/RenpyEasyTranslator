@@ -131,7 +131,7 @@ def find_rpy_files(path):
     return rpy_files
 
 if __name__ == "__main__":
-    path = "C:/Users/Administrator/Desktop/teest/RenpyEasyTranslator-main/aa"	# 替换为要翻译的文件所在的路径
+    path = "C:XXXXXXXXXXXX/aa"	# 替换为要翻译的文件所在的路径
     url = 'https://www.deepl.com/zh/translator#en/zh/'	# 默认英翻中，想翻别的语言可以把这里改一下
     with open('index.js', 'r', encoding='utf-8') as file:
         index_content = file.read()
@@ -141,16 +141,15 @@ if __name__ == "__main__":
     # options.add_argument("--lang=zh-CN")
     finished = False
     while not finished:
-        # try:
-        browser = webdriver.Chrome(options=options)
-            # 接受用户输入的路径
-        rpy_files = find_rpy_files(path)
+        try:
+            browser = webdriver.Chrome(options=options)
+            rpy_files = find_rpy_files(path)
 
-        for rpy_file in rpy_files:
-            rpy_file = rpy_file.replace("\\", "/")
-            print("开始处理：" + rpy_file)
-            deal_file(rpy_file)
-        finished = True
-        browser.quit()
-        # except Exception as e:
-        #     print(e)
+            for rpy_file in rpy_files:
+                rpy_file = rpy_file.replace("\\", "/")
+                print("开始处理：" + rpy_file)
+                deal_file(rpy_file)
+            finished = True
+            browser.quit()
+        except Exception as e:
+            print(e)
